@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CYBER AMIDA - The Ultimate Ghost Leg</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=M+PLUS+1+Code:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff00ff;
+            --neon-green: #0aff00;
+            --bg-dark: #050510;
+        }
+
+        body {
+            font-family: 'M PLUS 1 Code', 'Orbitron', monospace;
+            background-color: var(--bg-dark);
+            color: #fff;
+            touch-action: manipulation;
+            overflow: hidden;
+        }
+
+        /* Starry Background */
+        #star-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+        }
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle var(--duration) infinite ease-in-out;
+            opacity: 0;
+        }
+        @keyframes twinkle {
+            0% { opacity: 0; transform: scale(0.5); }
+            50% { opacity: var(--opacity); transform: scale(1); }
+            100% { opacity: 0; transform: scale(0.5); }
+        }
+
+        /* Cyber UI Components */
+        .cyber-box {
+            background: rgba(10, 20, 40, 0.85);
+            border: 1px solid var(--neon-blue);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2), inset 0 0 20px rgba(0, 243, 255, 0.1);
+            backdrop-filter: blur(5px);
+        }
+
+        .cyber-input {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #334;
+            color: var(--neon-blue);
+            font-family: 'Orbitron', monospace;
+            transition: all 0.3s;
+        }
+        .cyber-input:focus {
+            border-color: var(--neon-pink);
+            outline: none;
+            box-shadow: 0 0 10px rgba(255, 0, 255, 0.3);
+        }
+
+        .cyber-btn {
+            background: linear-gradient(45deg, #001133, #002255);
+            border: 1px solid var(--neon-blue);
+            color: var(--neon-blue);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: bold;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+        .cyber-btn:hover:not(:disabled) {
+            background: var(--neon-blue);
+            color: #000;
+            box-shadow: 0 0 20px var(--neon-blue);
+        }
+        .cyber-btn:disabled {
+            border-color: #555;
+            color: #555;
+            cursor: not-allowed;
+        }
+
+        .cyber-btn-pink {
+            border-color: var(--neon-pink);
+            color: var(--neon-pink);
+        }
+        .cyber-btn-pink:hover:not(:disabled) {
+            background: var(--neon-pink);
+            color: #000;
+            box-shadow: 0 0 20px var(--neon-pink);
+        }
+
+        /* Canvas Area */
+        .canvas-wrapper {
+            position: relative;
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.1);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            background: rgba(0, 5, 16, 0.8);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+        }
+
+        /* Animations */
+        .glow-text {
+            text-shadow: 0 0 10px var(--neon-blue);
+        }
+        .glow-text-pink {
+            text-shadow: 0 0 10px var(--neon-pink);
+        }
+
+        /* Custom Scrollbar for Prize List */
+        .prize-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        .prize-list::-webkit-scrollbar-track {
+            background: #000; 
+        }
+        .prize-list::-webkit-scrollbar-thumb {
+            background: #333; 
+            border: 1px solid var(--neon-blue);
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col relative text-sm sm:text-base">
+
+    <!-- Background -->
+    <div id="star-bg"></div>
+
+    <!-- Header -->
+    <header class="p-4 z-20 flex justify-center items-center">
+        <h1 class="text-3xl sm:text-4xl font-black tracking-widest italic glow-text text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600 font-[Orbitron]">
+            CYBER AMIDA <span class="text-pink-500 text-xl not-italic">3D</span>
+        </h1>
+    </header>
+
+    <!-- App Container -->
+    <main class="flex-grow flex flex-col items-center justify-center p-4 relative z-10 w-full max-w-5xl mx-auto h-full overflow-hidden">
+        
+        <!-- PHASE 1: SETUP SCREEN -->
+        <div id="screen-setup" class="w-full max-w-2xl cyber-box p-6 rounded-xl flex flex-col gap-6 animate-fade-in">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Left: Config -->
+                <div>
+                    <h2 class="text-xl font-bold mb-4 text-cyan-400 border-b border-cyan-900 pb-2">CONFIGURATION</h2>
+                    <div class="mb-4">
+                        <label class="block text-gray-400 mb-2 text-xs uppercase tracking-wider">くじの本数 (3-20)</label>
+                        <div class="flex items-center gap-4">
+                            <button id="btn-legs-minus" class="cyber-btn w-12 h-12 rounded text-xl font-bold flex items-center justify-center hover:bg-cyan-900 transition">-</button>
+                            <input type="number" id="input-legs" min="3" max="20" value="6" class="cyber-input flex-grow text-center text-2xl font-bold p-2 rounded font-[Orbitron] h-12 appearance-none">
+                            <button id="btn-legs-plus" class="cyber-btn w-12 h-12 rounded text-xl font-bold flex items-center justify-center hover:bg-cyan-900 transition">+</button>
+                        </div>
+                        <p class="text-xs text-gray-600 mt-2 text-center">※ 直接入力またはボタンで変更</p>
+                    </div>
+                </div>
+
+                <!-- Right: Prizes -->
+                <div class="flex flex-col h-64 md:h-80">
+                    <div class="flex justify-between items-center mb-2 border-b border-pink-900 pb-2">
+                        <h2 class="text-xl font-bold text-pink-500">PRIZES</h2>
+                        <button id="btn-add-prize" class="text-xs bg-pink-900 hover:bg-pink-700 text-white px-2 py-1 rounded transition border border-pink-500">+ 追加</button>
+                    </div>
+                    <div class="text-xs text-gray-500 mb-2">※ 入力がない枠は「ハズレ」になります</div>
+                    <div id="prize-list" class="prize-list flex-grow overflow-y-auto space-y-2 pr-2">
+                        <!-- Dynamic Prize Items -->
+                    </div>
+                </div>
+            </div>
+
+            <button id="btn-generate" class="w-full py-4 text-xl cyber-btn rounded-lg mt-2">
+                GENERATE GRID
+            </button>
+        </div>
+
+        <!-- PHASE 2 & 3: CANVAS SCREEN (Edit & Run) -->
+        <div id="screen-canvas" class="hidden w-full h-full flex flex-col relative">
+            
+            <!-- Status Message -->
+            <div id="status-bar" class="absolute top-4 left-0 right-0 text-center pointer-events-none z-20">
+                <span class="bg-black/70 px-4 py-1 rounded border border-cyan-500 text-cyan-400 text-sm font-bold tracking-wider" id="status-text">
+                    TAP GRID TO ADD/REMOVE LINES
+                </span>
+            </div>
+
+            <!-- Canvas Wrapper -->
+            <div class="canvas-wrapper flex-grow w-full rounded-lg overflow-hidden relative" id="canvas-container">
+                <canvas id="main-canvas" class="block w-full h-full"></canvas>
+            </div>
+
+            <!-- Controls Footer -->
+            <div class="h-16 mt-4 flex justify-between items-center gap-4 w-full">
+                <!-- Edit Phase Controls -->
+                <div id="controls-edit" class="flex gap-2 w-full">
+                    <button id="btn-back" class="cyber-btn px-4 py-2 rounded text-sm w-12 flex justify-center items-center">
+                        &lt;&lt;
+                    </button>
+                    <button id="btn-random" class="cyber-btn px-4 py-2 rounded text-sm flex-1">
+                        ランダム追加
+                    </button>
+                    <button id="btn-clear" class="cyber-btn px-4 py-2 rounded text-sm flex-1 text-red-400 border-red-900 hover:border-red-500">
+                        クリア
+                    </button>
+                    <button id="btn-confirm" class="cyber-btn cyber-btn-pink px-6 py-2 rounded text-sm flex-[2] font-bold">
+                        決定 & プレイヤー選択
+                    </button>
+                </div>
+
+                <!-- Player Entry Phase Controls -->
+                <div id="controls-entry" class="hidden flex gap-2 w-full justify-end">
+                    <button id="btn-back-to-edit" class="cyber-btn px-4 py-2 rounded text-sm">
+                        編集に戻る
+                    </button>
+                    <div class="flex-grow"></div>
+                    <button id="btn-start" class="cyber-btn cyber-btn-pink px-8 py-2 rounded text-xl font-bold animate-pulse">
+                        START AMIDA
+                    </button>
+                </div>
+
+                <!-- Running/Result Phase Controls -->
+                <div id="controls-result" class="hidden flex gap-2 w-full justify-center">
+                    <button id="btn-retry" class="cyber-btn px-8 py-2 rounded text-lg w-full max-w-xs">
+                        RETRY
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Player Name Input Modal -->
+    <div id="modal-player" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay p-4">
+        <div class="cyber-box p-8 rounded-xl w-full max-w-sm flex flex-col gap-4 transform scale-100 transition-all">
+            <h3 class="text-xl font-bold text-cyan-400 text-center">ENTRY NAME</h3>
+            <input type="text" id="input-player-name" class="cyber-input p-3 rounded text-lg text-center" placeholder="Player Name" maxlength="8">
+            <div class="flex gap-2 mt-2">
+                <button id="btn-modal-cancel" class="flex-1 py-2 rounded border border-gray-600 text-gray-400 hover:bg-gray-800">キャンセル</button>
+                <button id="btn-modal-ok" class="flex-[2] py-2 rounded bg-cyan-900 text-cyan-100 hover:bg-cyan-700 font-bold border border-cyan-500">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Result Popup (Simple) -->
+    <div id="modal-result" class="hidden fixed top-20 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none">
+        <div class="cyber-box px-8 py-4 rounded-full border-pink-500 shadow-[0_0_30px_rgba(255,0,255,0.4)]">
+            <span class="text-2xl font-black text-white glow-text-pink" id="result-text">WINNER!</span>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Sound Manager (Synth)
+         */
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        const playTone = (freq, type = 'sine', dur = 0.1, vol = 0.1) => {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + dur);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + dur);
+        };
+
+        const Sounds = {
+            click: () => playTone(1200, 'square', 0.05, 0.05),
+            add: () => playTone(880, 'sine', 0.1, 0.1),
+            remove: () => playTone(440, 'sawtooth', 0.1, 0.05),
+            start: () => {
+                playTone(440, 'square', 0.1);
+                setTimeout(() => playTone(880, 'square', 0.4), 100);
+            },
+            step: () => playTone(200 + Math.random()*100, 'triangle', 0.05, 0.02),
+            goal: () => {
+                [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => playTone(f, 'square', 0.2, 0.1), i*80));
+            }
+        };
+
+        /**
+         * Star Background
+         */
+        const initStars = () => {
+            const bg = document.getElementById('star-bg');
+            const count = 100;
+            for(let i=0; i<count; i++) {
+                const s = document.createElement('div');
+                s.className = 'star';
+                s.style.left = Math.random() * 100 + '%';
+                s.style.top = Math.random() * 100 + '%';
+                s.style.width = Math.random() * 3 + 'px';
+                s.style.height = s.style.width;
+                s.style.setProperty('--duration', (2 + Math.random() * 3) + 's');
+                s.style.setProperty('--opacity', 0.3 + Math.random() * 0.7);
+                s.style.animationDelay = Math.random() * 5 + 's';
+                bg.appendChild(s);
+            }
+        };
+        initStars();
+
+        /**
+         * App State & Logic
+         */
+        const STATE = {
+            SETUP: 0,
+            EDIT: 1,
+            ENTRY: 2,
+            RUNNING: 3,
+            FINISHED: 4
+        };
+        let currentState = STATE.SETUP;
+
+        // Configuration
+        let config = {
+            legs: 6,
+            prizes: ["特賞", "1等", "2等", "3等"] // Default prizes
+        };
+        let players = []; // { name: "Player 1", color: "#..." }
+        let bridges = []; // { col: 0, y: 0.5 }
+        
+        // New variables for Secret Mode
+        let shuffledPrizes = [];
+        let prizeRevealed = [];
+        
+        // Canvas & Drawing
+        const canvas = document.getElementById('main-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        
+        // Layout Constants
+        const MARGIN_TOP = 80;
+        const MARGIN_BOTTOM = 100;
+        const MARGIN_SIDE = 50;
+        let legSpacing = 0;
+
+        // Runners
+        let runners = [];
+        
+        const COLORS = [
+            '#ff0000', '#00ff00', '#0000ff', '#ffff00', 
+            '#00ffff', '#ff00ff', '#ff8800', '#8800ff',
+            '#00ff88', '#ff0088', '#88ff00', '#0088ff'
+        ];
+
+        /* --- DOM Elements --- */
+        const screens = {
+            setup: document.getElementById('screen-setup'),
+            canvas: document.getElementById('screen-canvas')
+        };
+        const controls = {
+            edit: document.getElementById('controls-edit'),
+            entry: document.getElementById('controls-entry'),
+            result: document.getElementById('controls-result')
+        };
+        const statusText = document.getElementById('status-text');
+
+        /* --- Setup Logic --- */
+        const legInput = document.getElementById('input-legs');
+        const prizeListEl = document.getElementById('prize-list');
+
+        function renderPrizeList() {
+            prizeListEl.innerHTML = '';
+            config.prizes.forEach((prize, idx) => {
+                const div = document.createElement('div');
+                div.className = 'flex gap-2 items-center animate-fade-in-up';
+                div.innerHTML = `
+                    <input type="text" class="cyber-input flex-grow p-2 rounded text-sm" value="${prize}" data-idx="${idx}">
+                    <button class="text-red-500 hover:text-red-300 px-2 font-bold text-lg" onclick="removePrize(${idx})">×</button>
+                `;
+                // Auto-save on input
+                div.querySelector('input').oninput = (e) => {
+                    config.prizes[idx] = e.target.value;
+                };
+                prizeListEl.appendChild(div);
+            });
+        }
+
+        window.removePrize = (idx) => {
+            config.prizes.splice(idx, 1);
+            renderPrizeList();
+        };
+
+        document.getElementById('btn-add-prize').onclick = () => {
+            config.prizes.push(`賞品 ${config.prizes.length + 1}`);
+            renderPrizeList();
+            // Scroll to bottom
+            setTimeout(() => prizeListEl.scrollTop = prizeListEl.scrollHeight, 50);
+        };
+
+        // Logic for Leg Input
+        const validateLegs = (val) => {
+            let num = parseInt(val);
+            if (isNaN(num)) num = 3;
+            if (num < 3) num = 3;
+            if (num > 20) num = 20;
+            return num;
+        };
+
+        legInput.onchange = (e) => {
+            legInput.value = validateLegs(e.target.value);
+        };
+
+        document.getElementById('btn-legs-minus').onclick = () => {
+            legInput.value = validateLegs(parseInt(legInput.value) - 1);
+            Sounds.click();
+        };
+
+        document.getElementById('btn-legs-plus').onclick = () => {
+            legInput.value = validateLegs(parseInt(legInput.value) + 1);
+            Sounds.click();
+        };
+
+        document.getElementById('btn-generate').onclick = () => {
+            config.legs = parseInt(legInput.value);
+            
+            // Prepare Prizes (Shuffle & Pad)
+            let fullPrizes = [...config.prizes];
+            // Fill remaining slots with "ハズレ"
+            while(fullPrizes.length < config.legs) fullPrizes.push("ハズレ");
+            
+            // Random shuffle
+            shuffledPrizes = fullPrizes
+                .map(value => ({ value, sort: Math.random() }))
+                .sort((a, b) => a.sort - b.sort)
+                .map(({ value }) => value);
+            
+            // Reset Revealed State (All hidden initially)
+            prizeRevealed = Array(config.legs).fill(false);
+
+            // Init Players
+            players = Array(config.legs).fill(null).map((_, i) => ({
+                name: `P${i+1}`,
+                color: COLORS[i % COLORS.length]
+            }));
+            
+            switchToState(STATE.EDIT);
+        };
+
+        document.getElementById('btn-back').onclick = () => {
+            switchToState(STATE.SETUP);
+        };
+
+        /* --- State Management --- */
+        function switchToState(newState) {
+            currentState = newState;
+            
+            // UI Toggle
+            if (newState === STATE.SETUP) {
+                screens.setup.classList.remove('hidden');
+                screens.canvas.classList.add('hidden');
+            } else {
+                screens.setup.classList.add('hidden');
+                screens.canvas.classList.remove('hidden');
+                resizeCanvas();
+                
+                // Reset stuff if entering edit from setup
+                if (newState === STATE.EDIT) {
+                    if (bridges.length === 0) generateRandomBridges(config.legs * 2); // Initial random lines
+                }
+            }
+
+            // Controls Toggle
+            controls.edit.classList.add('hidden');
+            controls.entry.classList.add('hidden');
+            controls.result.classList.add('hidden');
+
+            if (newState === STATE.EDIT) {
+                controls.edit.classList.remove('hidden');
+                statusText.textContent = "線をクリックして追加・削除";
+                statusText.className = "bg-black/70 px-4 py-1 rounded border border-cyan-500 text-cyan-400 text-sm font-bold tracking-wider";
+            } else if (newState === STATE.ENTRY) {
+                controls.entry.classList.remove('hidden');
+                statusText.textContent = "上部の玉をクリックしてプレイヤー名を変更";
+                statusText.className = "bg-black/70 px-4 py-1 rounded border border-pink-500 text-pink-400 text-sm font-bold tracking-wider animate-pulse";
+            } else if (newState === STATE.RUNNING) {
+                statusText.textContent = "RUNNING...";
+                statusText.className = "bg-transparent text-white text-xl font-bold tracking-widest glow-text";
+            } else if (newState === STATE.FINISHED) {
+                controls.result.classList.remove('hidden');
+                statusText.textContent = "FINISHED";
+            }
+
+            draw();
+        }
+
+        /* --- Canvas Logic --- */
+        function resizeCanvas() {
+            const container = document.getElementById('canvas-container');
+            const dpr = window.devicePixelRatio || 1;
+            width = container.clientWidth;
+            height = container.clientHeight;
+            
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            ctx.scale(dpr, dpr);
+            
+            // Recalc layout
+            legSpacing = (width - (MARGIN_SIDE * 2)) / (config.legs - 1);
+            draw();
+        }
+        window.addEventListener('resize', () => {
+            if (currentState !== STATE.SETUP) resizeCanvas();
+        });
+
+        function generateRandomBridges(count) {
+            bridges = [];
+            for(let i=0; i<count; i++) {
+                addRandomBridge();
+            }
+            draw();
+        }
+
+        function addRandomBridge() {
+            const col = Math.floor(Math.random() * (config.legs - 1));
+            const y = 0.1 + Math.random() * 0.8;
+            if (!checkCollision(col, y)) {
+                bridges.push({col, y});
+            }
+        }
+
+        function checkCollision(col, y) {
+            return bridges.some(b => 
+                (b.col === col && Math.abs(b.y - y) < 0.03) || // Same col proximity
+                ((b.col === col-1 || b.col === col+1) && Math.abs(b.y - y) < 0.01) // Adjacent col too close
+            );
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, width, height);
+
+            const drawHeight = height - MARGIN_TOP - MARGIN_BOTTOM;
+
+            // 1. Draw Vertical Lines
+            for (let i = 0; i < config.legs; i++) {
+                const x = MARGIN_SIDE + i * legSpacing;
+                
+                // Line
+                ctx.beginPath();
+                ctx.moveTo(x, MARGIN_TOP);
+                ctx.lineTo(x, height - MARGIN_BOTTOM);
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.stroke();
+
+                // Top Circle (Player)
+                ctx.beginPath();
+                ctx.arc(x, MARGIN_TOP, 10, 0, Math.PI * 2);
+                
+                if (currentState === STATE.ENTRY || currentState === STATE.RUNNING || currentState === STATE.FINISHED) {
+                     // Colored Player Balls
+                    ctx.fillStyle = players[i].color;
+                    ctx.shadowColor = players[i].color;
+                    ctx.shadowBlur = 10;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+
+                    // Name Tag
+                    ctx.fillStyle = "#fff";
+                    ctx.font = "bold 12px 'M PLUS 1 Code'";
+                    ctx.textAlign = "center";
+                    ctx.fillText(players[i].name, x, MARGIN_TOP - 20);
+                } else {
+                    // Setup style
+                    ctx.fillStyle = "#334";
+                    ctx.strokeStyle = "#0ff";
+                    ctx.lineWidth = 2;
+                    ctx.fill();
+                    ctx.stroke();
+                }
+
+                // Bottom Label (Prize) - MODIFIED: Secret & Shuffle
+                let isRevealed = prizeRevealed[i];
+                let prizeText = isRevealed ? shuffledPrizes[i] : "???";
+                
+                ctx.fillStyle = isRevealed ? "#fff" : "#445";
+                ctx.font = isRevealed ? "bold 14px 'M PLUS 1 Code'" : "14px 'Orbitron'";
+                ctx.textAlign = "center";
+                ctx.fillText(prizeText, x, height - MARGIN_BOTTOM + 25);
+                
+                // Prize Box
+                ctx.strokeStyle = isRevealed ? (shuffledPrizes[i] !== "ハズレ" ? '#f0f' : '#555') : '#334';
+                if (isRevealed && shuffledPrizes[i] !== "ハズレ") {
+                     ctx.shadowColor = '#f0f';
+                     ctx.shadowBlur = 10;
+                }
+                ctx.strokeRect(x - 20, height - MARGIN_BOTTOM + 10, 40, 20);
+                ctx.shadowBlur = 0;
+            }
+
+            // 2. Draw Bridges
+            ctx.shadowBlur = 5;
+            ctx.shadowColor = 'rgba(255, 0, 255, 0.8)';
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#f0f'; // Magenta neon
+
+            bridges.forEach(b => {
+                const x1 = MARGIN_SIDE + b.col * legSpacing;
+                const x2 = x1 + legSpacing;
+                const y = MARGIN_TOP + b.y * drawHeight;
+
+                ctx.beginPath();
+                ctx.moveTo(x1, y);
+                ctx.lineTo(x2, y);
+                ctx.stroke();
+
+                // Connectors
+                ctx.fillStyle = '#f0f';
+                ctx.beginPath();
+                ctx.arc(x1, y, 3, 0, Math.PI*2);
+                ctx.arc(x2, y, 3, 0, Math.PI*2);
+                ctx.fill();
+            });
+            ctx.shadowBlur = 0;
+
+            // 3. Draw Runners (If running)
+            if (currentState === STATE.RUNNING || currentState === STATE.FINISHED) {
+                runners.forEach(r => {
+                    const x = MARGIN_SIDE + r.currentLeg * legSpacing; // Visual X might need interpolation
+                    const y = MARGIN_TOP + r.y * drawHeight;
+
+                    // Calculate visual X for crossing
+                    let drawX = x;
+                    if (r.state === 'crossing') {
+                        const startX = MARGIN_SIDE + r.lastLeg * legSpacing;
+                        const endX = MARGIN_SIDE + r.targetLeg * legSpacing;
+                        drawX = startX + (endX - startX) * r.crossProgress;
+                    }
+
+                    // Trail
+                    if (r.path.length > 0) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = r.color;
+                        ctx.lineWidth = 4;
+                        ctx.globalAlpha = 0.5;
+                        ctx.moveTo(
+                            MARGIN_SIDE + r.path[0].col * legSpacing, 
+                            MARGIN_TOP + r.path[0].y * drawHeight
+                        );
+                        for(let p of r.path) {
+                            ctx.lineTo(
+                                MARGIN_SIDE + p.col * legSpacing, 
+                                MARGIN_TOP + p.y * drawHeight
+                            );
+                        }
+                        ctx.lineTo(drawX, y);
+                        ctx.stroke();
+                        ctx.globalAlpha = 1.0;
+                    }
+
+                    // Ball
+                    ctx.beginPath();
+                    ctx.fillStyle = '#fff'; // Core
+                    ctx.arc(drawX, y, 6, 0, Math.PI*2);
+                    ctx.fill();
+                    
+                    ctx.beginPath();
+                    ctx.strokeStyle = r.color;
+                    ctx.lineWidth = 2;
+                    ctx.arc(drawX, y, 10, 0, Math.PI*2);
+                    ctx.stroke();
+                });
+            }
+        }
+
+        /* --- Interactions --- */
+        canvas.addEventListener('pointerdown', (e) => {
+            if (currentState === STATE.RUNNING) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const drawHeight = height - MARGIN_TOP - MARGIN_BOTTOM;
+
+            // A. PLAYER ENTRY CLICK (Top Circles)
+            if (currentState === STATE.ENTRY) {
+                if (y < MARGIN_TOP + 20 && y > MARGIN_TOP - 20) {
+                    for (let i = 0; i < config.legs; i++) {
+                        const legX = MARGIN_SIDE + i * legSpacing;
+                        if (Math.abs(x - legX) < 20) {
+                            openPlayerModal(i);
+                            return;
+                        }
+                    }
+                }
+            }
+
+            // B. EDIT GRID CLICK
+            if (currentState === STATE.EDIT) {
+                // Bounds Check
+                if (y < MARGIN_TOP || y > height - MARGIN_BOTTOM) return;
+
+                // 1. Remove?
+                const removeIdx = bridges.findIndex(b => {
+                    const bx = MARGIN_SIDE + b.col * legSpacing + legSpacing/2;
+                    const by = MARGIN_TOP + b.y * drawHeight;
+                    return Math.abs(x - bx) < legSpacing/2 && Math.abs(y - by) < 10;
+                });
+
+                if (removeIdx !== -1) {
+                    bridges.splice(removeIdx, 1);
+                    Sounds.remove();
+                    draw();
+                    return;
+                }
+
+                // 2. Add?
+                // Identify column gap
+                let clickedCol = -1;
+                for (let i = 0; i < config.legs - 1; i++) {
+                    const left = MARGIN_SIDE + i * legSpacing;
+                    const right = left + legSpacing;
+                    if (x > left + 10 && x < right - 10) {
+                        clickedCol = i;
+                        break;
+                    }
+                }
+
+                if (clickedCol !== -1) {
+                    const yRatio = (y - MARGIN_TOP) / drawHeight;
+                    if (!checkCollision(clickedCol, yRatio)) {
+                        bridges.push({col: clickedCol, y: yRatio});
+                        Sounds.add();
+                        draw();
+                    }
+                }
+            }
+        });
+
+        /* --- Player Modal --- */
+        let editingPlayerIdx = -1;
+        const modalPlayer = document.getElementById('modal-player');
+        const inputPlayerName = document.getElementById('input-player-name');
+
+        function openPlayerModal(idx) {
+            editingPlayerIdx = idx;
+            inputPlayerName.value = players[idx].name;
+            modalPlayer.classList.remove('hidden');
+            inputPlayerName.focus();
+            Sounds.click();
+        }
+
+        document.getElementById('btn-modal-cancel').onclick = () => {
+            modalPlayer.classList.add('hidden');
+        };
+
+        document.getElementById('btn-modal-ok').onclick = () => {
+            if (editingPlayerIdx !== -1) {
+                const val = inputPlayerName.value.trim();
+                if (val) players[editingPlayerIdx].name = val;
+                draw();
+            }
+            modalPlayer.classList.add('hidden');
+            Sounds.click();
+        };
+
+        /* --- Footer Controls --- */
+        // Edit Phase
+        document.getElementById('btn-random').onclick = () => {
+            generateRandomBridges(config.legs);
+            Sounds.click();
+        };
+        document.getElementById('btn-clear').onclick = () => {
+            bridges = [];
+            draw();
+            Sounds.remove();
+        };
+        document.getElementById('btn-confirm').onclick = () => {
+            switchToState(STATE.ENTRY);
+            Sounds.click();
+        };
+
+        // Entry Phase
+        document.getElementById('btn-back-to-edit').onclick = () => {
+            switchToState(STATE.EDIT);
+            Sounds.click();
+        };
+        document.getElementById('btn-start').onclick = startAmida;
+
+        // Result Phase
+        document.getElementById('btn-retry').onclick = () => {
+            runners = [];
+            switchToState(STATE.SETUP);
+            Sounds.click();
+        };
+
+        /* --- Game Loop --- */
+        function startAmida() {
+            Sounds.start();
+            switchToState(STATE.RUNNING);
+            
+            // Initialize Runners
+            runners = players.map((p, i) => ({
+                id: i,
+                color: p.color,
+                currentLeg: i,
+                lastLeg: i,
+                targetLeg: i,
+                y: 0,
+                state: 'down', // 'down' | 'crossing' | 'finished'
+                crossProgress: 0,
+                speed: 0.003 + Math.random() * 0.001, // Variation
+                path: [{col: i, y: 0}]
+            }));
+
+            requestAnimationFrame(updateLoop);
+        }
+
+        function updateLoop() {
+            if (currentState !== STATE.RUNNING) return;
+
+            let activeCount = 0;
+            const drawHeight = height - MARGIN_TOP - MARGIN_BOTTOM;
+
+            runners.forEach(r => {
+                if (r.state === 'finished') return;
+                activeCount++;
+
+                if (r.state === 'down') {
+                    // Check for bridges below
+                    let nextBridge = null;
+                    let minDist = Infinity;
+
+                    bridges.forEach(b => {
+                        // Bridge must be below current Y
+                        if (b.y > r.y) {
+                            // Must be connected to current leg
+                            if (b.col === r.currentLeg || b.col === r.currentLeg - 1) {
+                                if (b.y - r.y < minDist) {
+                                    minDist = b.y - r.y;
+                                    nextBridge = b;
+                                }
+                            }
+                        }
+                    });
+
+                    // Move
+                    r.y += r.speed;
+
+                    // Hit Bridge?
+                    if (nextBridge && r.y >= nextBridge.y) {
+                        r.y = nextBridge.y;
+                        r.state = 'crossing';
+                        r.lastLeg = r.currentLeg;
+                        r.targetLeg = (nextBridge.col === r.currentLeg) ? r.currentLeg + 1 : r.currentLeg - 1;
+                        r.crossProgress = 0;
+                        r.path.push({col: r.currentLeg, y: r.y});
+                        Sounds.step();
+                    }
+                    // Hit Bottom?
+                    else if (r.y >= 1.0) {
+                        r.y = 1.0;
+                        r.state = 'finished';
+                        r.path.push({col: r.currentLeg, y: 1.0});
+                        
+                        // Reveal Prize on Hit
+                        prizeRevealed[r.currentLeg] = true;
+                        // Optional: Play a sound if it's a win
+                        if (shuffledPrizes[r.currentLeg] !== "ハズレ") {
+                            Sounds.click(); // Simple effect
+                        }
+                    }
+
+                } else if (r.state === 'crossing') {
+                    r.crossProgress += r.speed * 8; // Cross speed
+                    if (r.crossProgress >= 1) {
+                        r.crossProgress = 0;
+                        r.currentLeg = r.targetLeg;
+                        r.state = 'down';
+                        r.path.push({col: r.currentLeg, y: r.y});
+                    }
+                }
+            });
+
+            draw();
+
+            if (activeCount > 0) {
+                requestAnimationFrame(updateLoop);
+            } else {
+                finishGame();
+            }
+        }
+
+        function finishGame() {
+            currentState = STATE.FINISHED;
+            switchToState(STATE.FINISHED);
+            Sounds.goal();
+
+            // Flash Result for Player 1 (Example of result logic)
+            // In a real usage, maybe show all. Here just sound and text.
+            document.getElementById('result-text').textContent = "FINISH!";
+            const modal = document.getElementById('modal-result');
+            modal.classList.remove('hidden');
+            modal.classList.add('animate-bounce');
+            setTimeout(() => {
+                modal.classList.remove('animate-bounce');
+                modal.classList.add('hidden');
+            }, 3000);
+        }
+
+    </script>
+</body>
+</html>
