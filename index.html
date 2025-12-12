@@ -426,6 +426,10 @@
         document.getElementById('btn-generate').onclick = () => {
             config.legs = parseInt(legInput.value);
             
+            // RESET GAME DATA
+            bridges = []; // Clear old bridges
+            runners = []; // Clear old runners
+            
             // Prepare Prizes (Shuffle & Pad)
             let fullPrizes = [...config.prizes];
             // Fill remaining slots with "ハズレ"
